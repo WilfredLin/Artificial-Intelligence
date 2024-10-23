@@ -1,0 +1,78 @@
+import numpy as np
+
+class MultiHeadSelfAttention:
+    def __init__(self, input_dim, num_heads):
+        self.input_dim = input_dim
+        self.num_heads = num_heads
+        self.head_dim = input_dim // num_heads
+        
+        # Initialize weights for query, key, value projections
+        self.Wq = np.random.rand(input_dim, input_dim)
+        self.Wk = np.random.rand(input_dim, input_dim)
+        self.Wv = np.random.rand(input_dim, input_dim)
+        self.Wo = np.random.rand(input_dim, input_dim)
+
+    def split_heads(self, x):
+        """Split the input into multiple heads."""
+        batch_size, seq_length, _ = x.shape
+        x = np.reshape(x, (batch_size, seq_length, self.num_heads, self.head_dim))
+        return np.transpose(x, (0, 2, 1, 3))  # (batch_size, num_heads, seq_length, head_dim)
+
+    def scaled_dot_product_attention(self, Q, K, V):
+        """Calculate the attention weights and output."""
+        matmul_qk = np.matmul(Q, K.transpose(-2, -1))  # (batch_size, num_heads, seq_length, seq_length)
+        dk = K.shape[-1]
+        scaled_attention_logits = matmul_qk / np.sqrt(dk)
+        attention_weights = self.softmax(scaled_attention_logits)
+        output = np.matmul(attention_weights, V)  # (batch_size, num_heads, seq_length, head_dim)
+        return output, attention_weights
+
+    def softmax(self, x):
+        """Compute softmax values for each set of scores."""
+        exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
+        return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+    def forward(self, x):
+        """Perform multi-head self-attention on the input."""
+        batch_size, seq_length, _ = x.shape
+        
+        # Linear projections
+        Q = np.matmul(x, self.Wq)  # (batch_size, seq_length, input_dim)
+        K = np.matmul(x, self.Wk)  # (batch_size, seq_length, input_dim)
+        V = np.matmul(x, self.Wv)  # (batch_size, seq_length, input_dim)
+
+        # Split into multiple heads
+        Q = self.split_heads(Q)  # (batch_size, num_heads, seq_length, head_dim)
+        K = self.split_heads(K)  # (batch_size, num_heads, seq_length, head_dim)
+        V = self.split_heads(V)  # (batch_size, num_heads, seq_length, head_dim)
+
+        # Scaled dot-product attention
+        attention_output, attention_weights = self.scaled_dot_product_attention(Q, K, V)
+
+        # Concatenate heads and apply final linear projection
+        attention_output = np.transpose(attention_output, (0, 2, 1, 3))  # (batch_size, seq_length, num_heads, head_dim)
+        concat_attention = np.reshape(attention_output, (batch_size, seq_length, self.input_dim))  # (batch_size, seq_length, input_dim)
+        output = np.matmul(concat_attention, self.Wo)  # (batch_size, seq_length, input_dim)
+        
+        return output, attention_weights
+
+# Example usage
+if __name__ == "__main__":
+    # Create a synthetic dataset (e.g., random data)
+    np.random.seed(0)
+    batch_size = 2
+    seq_length = 10
+    input_dim = 16
+    num_heads = 4
+
+    # Initialize the MultiHeadSelfAttention object
+    multi_head_attention = MultiHeadSelfAttention(input_dim, num_heads)
+
+    # Create random input data
+    input_data = np.random.rand(batch_size, seq_length, input_dim)
+
+    # Perform multi-head self-attention
+    output, weights = multi_head_attention.forward(input_data)
+
+    print("Output shape:", output.shape)  # Should be (batch_size, seq_length, input_dim)
+    print("Attention weights shape:", weights.shape)  # Should be (batch_size, num_heads, seq_length, seq_length)
