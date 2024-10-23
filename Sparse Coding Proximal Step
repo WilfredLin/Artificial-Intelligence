@@ -1,0 +1,45 @@
+import numpy as np
+
+class SparseCoding:
+    def __init__(self, dictionary, lambda_param):
+        self.dictionary = dictionary  # The dictionary for sparse coding
+        self.lambda_param = lambda_param  # Regularization parameter
+
+    def soft_threshold(self, x, threshold):
+        """Apply soft thresholding to the input x."""
+        return np.sign(x) * np.maximum(np.abs(x) - threshold, 0)
+
+    def proximal_operator(self, y):
+        """Perform the proximal step for sparse coding."""
+        # Calculate the coefficients using the dictionary
+        A = np.dot(self.dictionary.T, self.dictionary)  # (n_features, n_features)
+        b = np.dot(self.dictionary.T, y)  # (n_features,)
+
+        # Solve the linear system (A * x = b)
+        x = np.linalg.solve(A + self.lambda_param * np.eye(A.shape[0]), b)
+
+        # Apply soft thresholding
+        x_sparse = self.soft_threshold(x, self.lambda_param)
+        return x_sparse
+
+# Example usage
+if __name__ == "__main__":
+    # Create a synthetic dictionary and input data
+    np.random.seed(0)
+    num_atoms = 5
+    input_dim = 10
+    lambda_param = 0.1
+
+    # Generate a random dictionary
+    dictionary = np.random.rand(input_dim, num_atoms)
+
+    # Create a random input signal
+    y = np.random.rand(input_dim)
+
+    # Initialize the SparseCoding object
+    sparse_coding = SparseCoding(dictionary, lambda_param)
+
+    # Perform the proximal step
+    sparse_coefficients = sparse_coding.proximal_operator(y)
+
+    print("Sparse coefficients:", sparse_coefficients)  # Output the sparse coefficients
