@@ -1,0 +1,40 @@
+import numpy as np
+
+class SparseRateReduction:
+    def __init__(self, data, threshold):
+        self.data = np.array(data)
+        self.threshold = threshold
+
+    def reduce(self):
+        """Apply sparse rate reduction by zeroing out values below the threshold."""
+        self.data[np.abs(self.data) < self.threshold] = 0
+        return self.data
+
+    def non_zero_elements(self):
+        """Return the non-zero elements of the tensor after reduction."""
+        return self.data[self.data != 0]
+
+    def shape(self):
+        """Return the shape of the tensor."""
+        return self.data.shape
+
+    def __repr__(self):
+        return f"SparseRateReduction(shape={self.shape()}, data=\n{self.data})"
+
+# Example usage
+if __name__ == "__main__":
+    # Create a 2D tensor (matrix) with some sparse values
+    tensor_data = [[0.1, 0.2, 0.0], [0.0, 0.5, 0.3], [0.0, 0.0, 0.4]]
+    threshold = 0.2
+
+    # Initialize the SparseRateReduction object
+    sparse_reduction = SparseRateReduction(tensor_data, threshold)
+
+    # Perform sparse rate reduction
+    reduced_data = sparse_reduction.reduce()
+    non_zero_elements = sparse_reduction.non_zero_elements()
+
+    # Display the results
+    print("Original Data:\n", tensor_data)
+    print("Reduced Data:\n", reduced_data)
+    print("Non-Zero Elements after Reduction:\n", non_zero_elements)
