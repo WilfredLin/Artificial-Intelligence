@@ -1,0 +1,65 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+class DiffusionModel:
+    def __init__(self, initial_image, num_steps, noise_level):
+        self.image = np.array(initial_image, dtype=float)
+        self.num_steps = num_steps
+        self.noise_level = noise_level
+
+    def add_noise(self):
+        """Add Gaussian noise to the image."""
+        noise = np.random.normal(0, self.noise_level, self.image.shape)
+        self.image += noise
+
+    def denoise(self):
+        """Denoise the image using a diffusion process."""
+        for step in range(self.num_steps):
+            self.image = self.diffuse(self.image)
+        return self.image
+
+    def diffuse(self, image):
+        """Perform one step of the diffusion process."""
+        # Simple averaging filter for diffusion
+        kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]]) / 8
+        return self.convolve(image, kernel)
+
+    def convolve(self, image, kernel):
+        """Convolve the image with a kernel."""
+        from scipy.signal import convolve2d
+        return convolve2d(image, kernel, mode='same', boundary='wrap')
+
+    def show_images(self, title=''):
+        """Display the original and denoised images."""
+        plt.figure(figsize=(12, 6))
+        plt.subplot(1, 2, 1)
+        plt.title('Noisy Image')
+        plt.imshow(self.image, cmap='gray')
+        plt.axis('off')
+
+        denoised_image = self.denoise()
+        plt.subplot(1, 2, 2)
+        plt.title('Denoised Image')
+        plt.imshow(denoised_image, cmap='gray')
+        plt.axis('off')
+
+        plt.suptitle(title)
+        plt.show()
+
+# Example usage
+if __name__ == "__main__":
+    # Create a simple synthetic image (e.g., a gradient)
+    initial_image = np.linspace(0, 1, 100).reshape(10, 10)
+
+    # Set parameters for the diffusion model
+    num_steps = 10
+    noise_level = 0.1
+
+    # Initialize the DiffusionModel object
+    diffusion_model = DiffusionModel(initial_image, num_steps, noise_level)
+
+    # Add noise to the image
+    diffusion_model.add_noise()
+
+    # Display the noisy and denoised images
+    diffusion_model.show_images(title='Diffusion Model Denoising')
